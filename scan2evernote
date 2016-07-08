@@ -1,0 +1,76 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use 5.24.0;
+
+use Sane;
+use Data::Dumper;
+
+say join('.',Sane->get_version);
+
+
+my @devices = Sane->get_devices;
+if ($Sane::STATUS == SANE_STATUS_GOOD) {
+  #say Dumper(@devices);
+  print "Name: $devices[0]->{name}\n";
+  print "Vendor: $devices[0]->{vendor}\n";
+  print "Model: $devices[0]->{model}\n";
+  print "Type: $devices[0]->{type}\n";
+}
+
+# scanimage -L to get the name
+my $device = Sane::Device->open('brother4:bus7;dev1');
+
+unless ($device) { die "could not open device";}
+
+my $option = $device->get_option_descriptor(0);
+if ($Sane::STATUS == SANE_STATUS_GOOD) {
+  #say Dumper $option;
+  #print "Name: $option->{name}\n";
+  say "Options:";
+  print "title: $option->{title}\n";
+  print "desc: $option->{desc}\n";
+  print "type: $option->{type}\n";
+  print "unit: $option->{unit}\n";
+  print "cap: $option->{cap}\n";
+  print "max_values: $option->{max_values}\n";
+  print "constrain_type: $option->{constraint_type}\n";
+}
+
+my $param = $device->get_parameters;
+if ($Sane::STATUS == SANE_STATUS_GOOD) {
+  say "Param:";
+ print "format $param->{format}\n";
+ print "last_frame $param->{last_frame}\n";
+ print "bytes_per_line $param->{bytes_per_line}\n";
+ print "pixels_per_line $param->{pixels_per_line}\n";
+ print "lines $param->{lines}\n";
+ print "depth $param->{depth}\n";
+}
+
+say "start device";
+$device->start;
+my $maxlen = $param->{bytes_per_line};
+#my $fd = $device->get_select_fd;
+#die "get_select_fd unsupported" if ($fd == SANE_STATUS_UNSUPPORTED);
+my ($buf, $len);
+my $image;
+until ($Sane::STATUS == SANE_STATUS_EOF) {
+  ($buf, $len) = $device->read($maxlen);
+  
+  say "read $len bytes";
+  say "Sane status: ", $Sane::STATUS;
+  $image .= $buf;
+}
+#write file
+my $filename = 'test.pnm';
+open (my $fh, '>', $filename) or die "could not open file '$filename' $!";
+$device->write_pnm_header ($fh, $param->{format}, 
+			   $param->{pixels_per_line},
+			   $param->{lines},
+			   $param->{depth});
+print $fh $image;
+
+close $fh;
+say "done";
