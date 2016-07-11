@@ -38,6 +38,10 @@ if ($Sane::STATUS == SANE_STATUS_GOOD) {
   print "constrain_type: $option->{constraint_type}\n";
 }
 
+
+say "start device";
+$device->start;
+
 my $param = $device->get_parameters;
 if ($Sane::STATUS == SANE_STATUS_GOOD) {
   say "Param:";
@@ -49,8 +53,8 @@ if ($Sane::STATUS == SANE_STATUS_GOOD) {
  print "depth $param->{depth}\n";
 }
 
-say "start device";
-$device->start;
+
+
 my $maxlen = $param->{bytes_per_line};
 #my $fd = $device->get_select_fd;
 #die "get_select_fd unsupported" if ($fd == SANE_STATUS_UNSUPPORTED);
@@ -61,7 +65,7 @@ until ($Sane::STATUS == SANE_STATUS_EOF) {
   
   say "read $len bytes";
   say "Sane status: ", $Sane::STATUS;
-  $image .= $buf;
+  $image .= $buf unless $Sane::STATUS == SANE_STATUS_EOF;
 }
 #write file
 my $filename = 'test.pnm';
