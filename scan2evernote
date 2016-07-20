@@ -26,7 +26,7 @@ unless ($device) { die "could not open device";}
 
 my $option = $device->get_option_descriptor(0);
 if ($Sane::STATUS == SANE_STATUS_GOOD) {
-  #say Dumper $option;
+  say Dumper $option;
   #print "Name: $option->{name}\n";
   say "Options:";
   print "title: $option->{title}\n";
@@ -37,6 +37,38 @@ if ($Sane::STATUS == SANE_STATUS_GOOD) {
   print "max_values: $option->{max_values}\n";
   print "constrain_type: $option->{constraint_type}\n";
 }
+
+# get number of options
+my $options = $device->get_option(0);
+if ($Sane::STATUS == SANE_STATUS_GOOD) {
+  print "number of options: $options\n";
+}
+
+for (my $i=0; $i < $options; $i++ ) {
+  my $option_val = $device->get_option($i);
+  if ($Sane::STATUS == SANE_STATUS_GOOD) {
+    print "option_val: $option_val\n";
+  }
+
+  my $option_desc = $device->get_option_descriptor($i);
+  if ($Sane::STATUS == SANE_STATUS_GOOD) {
+    #  say Dumper $option;
+    #print "Name: $option->{name}\n";
+    say "Option: $i";
+    print "  title: $option_desc->{title}\n";
+    print "  desc: $option_desc->{desc}\n";
+    print "  type: $option_desc->{type}\n";
+    print "  unit: $option_desc->{unit}\n";
+    print "  cap: $option_desc->{cap}\n";
+    print "  max_values: $option_desc->{max_values}\n";
+    print "  constrain_type: $option_desc->{constraint_type}\n";
+
+  }
+}
+
+$device->set_option(4,"Automatic Document Feeder(left aligned,Duplex)");
+print "set option 4 to: ", $device->get_option(4), "\n";
+
 
 
 say "start device";
@@ -63,8 +95,8 @@ my $image;
 until ($Sane::STATUS == SANE_STATUS_EOF) {
   ($buf, $len) = $device->read($maxlen);
   
-  say "read $len bytes";
-  say "Sane status: ", $Sane::STATUS;
+#  say "read $len bytes";
+#  say "Sane status: ", $Sane::STATUS;
   $image .= $buf unless $Sane::STATUS == SANE_STATUS_EOF;
 }
 #write file
